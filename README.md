@@ -45,4 +45,11 @@ Each webhook event is stored in this format:
 1. Clone the repo:
    ```bash
    git clone https://github.com/yourusername/webhook-repo.git
-   cd webhook-repo
+
+2. Install the Dependencies:
+   ```bash
+   pip install -r requirements.txt
+
+3. Create and Add the MONGO_URL in the .env file:
+   ```bash
+   MONGO_URL
