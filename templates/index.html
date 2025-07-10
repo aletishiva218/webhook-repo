@@ -1,46 +1,257 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>GitHub Events</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Webhook Activity Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* CSS Variables for easy theme changes */
+        :root {
+            --background-dark: #1a1a1a;
+            --surface-dark: #2c2c2c;
+            --text-light: #e0e0e0;
+            --accent-blue: #007acc;
+            --accent-green: #28a745;
+            --accent-purple: #6f42c1;
+            --border-color: #444;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--surface-dark);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            color: var(--accent-blue);
+            font-size: 2.2rem;
+            letter-spacing: 0.05rem;
+        }
+
+        main {
+            flex-grow: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 2rem auto;
+            width: 90%;
+        }
+
+        #events-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .event-card {
+            background-color: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.2rem;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px var(--shadow-color);
+        }
+
+        .event-icon {
+            font-size: 1.8rem;
+            margin-right: 1rem;
+            padding-top: 0.2rem;
+            color: var(--accent-blue); /* Default icon color */
+        }
+
+        .event-card.push .event-icon {
+            color: var(--accent-green);
+        }
+
+        .event-card.pull_request .event-icon {
+            color: var(--accent-purple);
+        }
+
+        .event-card.merge .event-icon {
+            color: var(--accent-blue);
+        }
+
+        .event-content {
+            flex-grow: 1;
+        }
+
+        .event-content p {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--text-light);
+        }
+
+        .event-content .timestamp {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 0.5rem;
+            display: block;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem 2rem;
+            background-color: var(--surface-dark);
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 2rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            main {
+                padding: 1rem;
+                width: 95%;
+            }
+
+            .event-card {
+                padding: 1rem;
+            }
+
+            .event-icon {
+                font-size: 1.5rem;
+                margin-right: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .event-card {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .event-icon {
+                margin-right: 0;
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h2>GitHub Webhook Activity</h2>
-  <ul id="events"></ul>
+    <header>
+        <h1>GitHub Webhook Activity Dashboard</h1>
+    </header>
 
-  <script>
-    function formatDate(timestamp) {
-      const options = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-        timeZone: 'UTC'
-      };
-      const date = new Date(timestamp);
-      return date.toLocaleString('en-US', options) + ' UTC';
-    }
+    <main>
+        <section>
+            <ul id="events-container">
+                </ul>
+        </section>
+    </main>
 
-    async function loadEvents() {
-      const res = await fetch('/events');
-      const events = await res.json();
+    <footer>
+        <p>&copy; 2025 GitHub Events Monitor. All rights reserved.</p>
+    </footer>
 
-      const listItems = events.map(e => {
-        const ts = formatDate(e.timestamp);
-        if (e.action === "PUSH")
-          return `<li>"${e.author}" pushed to "${e.to_branch}" on ${ts}</li>`;
-        if (e.action === "PULL_REQUEST")
-          return `<li>"${e.author}" submitted a pull request from "${e.from_branch}" to "${e.to_branch}" on ${ts}</li>`;
-        if (e.action === "MERGE")
-          return `<li>"${e.author}" merged branch "${e.from_branch}" to "${e.to_branch}" on ${ts}</li>`;
-      });
+    <script>
+        function formatDate(timestamp) {
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+                timeZoneName: 'short' // To display UTC or other timezone
+            };
+            const date = new Date(timestamp);
+            return date.toLocaleString('en-US', options);
+        }
 
-      document.getElementById("events").innerHTML = listItems.join("");
-    }
+        async function loadEvents() {
+            try {
+                const res = await fetch('/events');
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                const events = await res.json();
+                const eventsContainer = document.getElementById("events-container");
+                eventsContainer.innerHTML = ''; // Clear previous events
 
-    loadEvents();
-    setInterval(loadEvents, 15000);
-  </script>
+                if (events.length === 0) {
+                    eventsContainer.innerHTML = '<p style="text-align: center; color: #888;">No events to display yet.</p>';
+                    return;
+                }
+
+                events.forEach(e => {
+                    const ts = formatDate(e.timestamp);
+                    let eventText = "";
+                    let iconClass = "";
+                    let cardClass = "";
+
+                    if (e.action === "PUSH") {
+                        eventText = `<strong>"${e.author}"</strong> pushed to <strong>"${e.to_branch}"</strong>`;
+                        iconClass = "fas fa-code-branch"; // Git branch icon
+                        cardClass = "push";
+                    } else if (e.action === "PULL_REQUEST") {
+                        eventText = `<strong>"${e.author}"</strong> submitted a pull request from <strong>"${e.from_branch}"</strong> to <strong>"${e.to_branch}"</strong>`;
+                        iconClass = "fas fa-pull-request"; // Pull request icon
+                        cardClass = "pull_request";
+                    } else if (e.action === "MERGE") {
+                        eventText = `<strong>"${e.author}"</strong> merged branch <strong>"${e.from_branch}"</strong> into <strong>"${e.to_branch}"</strong>`;
+                        iconClass = "fas fa-code-merge"; // Merge icon
+                        cardClass = "merge";
+                    } else {
+                        eventText = `<strong>"${e.author}"</strong> performed an unknown action.`;
+                        iconClass = "fas fa-exclamation-circle"; // Generic alert icon
+                    }
+
+                    const listItem = document.createElement('li');
+                    listItem.className = `event-card ${cardClass}`;
+                    listItem.innerHTML = `
+                        <div class="event-icon"><i class="${iconClass}"></i></div>
+                        <div class="event-content">
+                            <p>${eventText}</p>
+                            <span class="timestamp">on ${ts}</span>
+                        </div>
+                    `;
+                    eventsContainer.appendChild(listItem);
+                });
+
+            } catch (error) {
+                console.error("Failed to load events:", error);
+                document.getElementById("events-container").innerHTML = `<p style="text-align: center; color: #ff6347;">Error loading events: ${error.message}. Please try again later.</p>`;
+            }
+        }
+
+        // Initial load
+        loadEvents();
+        // Refresh every 15 seconds
+        setInterval(loadEvents, 15000);
+    </script>
 </body>
 </html>
